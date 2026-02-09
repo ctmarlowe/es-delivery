@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id          String       @id @default(cuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdByName String?
+  engagements Engagement[]
+}
+
+model Engagement {
+  id            String        @id @default(cuid())
+  name          String
+  packageHours  Decimal       @db.Decimal(10, 2)
+  startDate     DateTime?
+  endDate       DateTime?
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  deliveryPlans DeliveryPlan[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdByName String?
+
+  @@index([customerId])
+}
+
+enum DeliveryPlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model DeliveryPlan {
+  id          String              @id @default(cuid())
+  title       String
+  status      DeliveryPlanStatus  @default(DRAFT)
+  engagementId String
+  engagement  Engagement          @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  sessions    Session[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  createdByName String?
+
+  @@index([engagementId])
+  @@index([status])
+}
+
+model Session {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?
+  plannedHours    Decimal       @db.Decimal(10, 2)
+  actualHours     Decimal?      @db.Decimal(10, 2)
+  scheduledDate   DateTime?
+  deliveryPlanId  String
+  deliveryPlan    DeliveryPlan  @relation(fields: [deliveryPlanId], references: [id], onDelete: Cascade)
+  libraryItemId   String?
+  libraryItem     LibraryItem?  @relation(fields: [libraryItemId], references: [id], onDelete: SetNull)
+  topics          Topic[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  createdByName   String?
+
+  @@index([deliveryPlanId])
+  @@index([libraryItemId])
+}
+
+model LibraryItem {
+  id            String      @id @default(cuid())
+  title         String
+  description   String?
+  defaultHours  Decimal     @db.Decimal(10, 2)
+  topics        Topic[]
+  sessions      Session[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdByName String?
+}
+
+model Topic {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  color         String?        @default("#3b82f6")
+  libraryItems  LibraryItem[]
+  sessions      Session[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  createdByName String?
+}
+
