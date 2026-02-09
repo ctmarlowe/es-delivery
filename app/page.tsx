@@ -3,14 +3,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Package, Calendar, BookOpen, Library, Tag } from "lucide-react"
 import { prisma } from "@/lib/prisma"
 
+// Force dynamic rendering to prevent build-time database access
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
-  const [customersCount, engagementsCount, plansCount, libraryCount, topicsCount] = await Promise.all([
-    prisma.customer.count(),
-    prisma.engagement.count(),
-    prisma.deliveryPlan.count(),
-    prisma.libraryItem.count(),
-    prisma.topic.count(),
-  ])
+  // Wrap database calls in try-catch to handle build-time failures gracefully
+  let customersCount = 0
+  let engagementsCount = 0
+  let plansCount = 0
+  let libraryCount = 0
+  let topicsCount = 0
+
+  try {
+    [customersCount, engagementsCount, plansCount, libraryCount, topicsCount] = await Promise.all([
+      prisma.customer.count(),
+      prisma.engagement.count(),
+      prisma.deliveryPlan.count(),
+      prisma.libraryItem.count(),
+      prisma.topic.count(),
+    ])
+  } catch (error) {
+    // During build or if database is unavailable, use default values
+    console.error("Failed to fetch counts:", error)
+  }
 
   const stats = [
     {

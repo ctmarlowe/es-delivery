@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const engagement = await prisma.engagement.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: true,
         deliveryPlans: {
@@ -36,9 +37,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { name, packageHours, startDate, endDate } = body
 
@@ -49,7 +51,7 @@ export async function PUT(
     if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null
 
     const engagement = await prisma.engagement.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         customer: true,
@@ -67,11 +69,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     await prisma.engagement.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

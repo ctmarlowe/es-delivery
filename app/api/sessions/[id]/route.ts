@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await prisma.session.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         deliveryPlan: {
           include: {
@@ -41,9 +42,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const {
       title,
@@ -55,7 +57,7 @@ export async function PUT(
     } = body
 
     const session = await prisma.session.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         deliveryPlan: {
           include: {
@@ -76,7 +78,7 @@ export async function PUT(
     // Validate hours if plannedHours is being updated
     if (plannedHours !== undefined) {
       const otherSessions = session.deliveryPlan.sessions.filter(
-        (s) => s.id !== params.id
+        (s) => s.id !== id
       )
       const totalPlannedHours = otherSessions.reduce(
         (sum, s) => sum + parseFloat(s.plannedHours.toString()),
@@ -102,7 +104,7 @@ export async function PUT(
     if (scheduledDate !== undefined) updateData.scheduledDate = scheduledDate ? new Date(scheduledDate) : null
 
     const updatedSession = await prisma.session.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...updateData,
         topics: topicIds
@@ -137,11 +139,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     await prisma.session.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })
